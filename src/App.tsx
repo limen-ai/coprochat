@@ -110,9 +110,12 @@ function App() {
       <div className="container mx-auto px-4 py-12 max-w-3xl">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-5xl font-bold mb-3 bg-gradient-to-r from-amber-400 to-yellow-600 bg-clip-text text-transparent">
-            CoproChat
-          </h1>
+          <div className="flex items-center justify-center gap-3 mb-3">
+            <img src="/logo.png" alt="CoproChat" className="w-16 h-16 drop-shadow-lg" />
+            <h1 className="text-5xl font-bold bg-gradient-to-r from-amber-400 to-yellow-600 bg-clip-text text-transparent">
+              CoproChat
+            </h1>
+          </div>
           <p className="text-slate-400 text-lg">
             {ui.subtitle}
           </p>
