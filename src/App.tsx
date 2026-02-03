@@ -74,73 +74,107 @@ const UI_TEXT = {
 function BSLevelSlider({ level, onChange }: { level: BSLevel; onChange: (level: BSLevel) => void }) {
   const currentIndex = BS_LEVELS.findIndex(l => l.id === level);
   const currentLevel = BS_LEVELS[currentIndex];
+  const [isDragging, setIsDragging] = useState(false);
+  
+  const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseInt(e.target.value);
+    onChange(BS_LEVELS[value].id);
+  };
+
+  const thumbPosition = (currentIndex / (BS_LEVELS.length - 1)) * 100;
   
   return (
-    <div className="mb-6">
-      <div className="flex justify-between items-center mb-2">
-        <label className="text-sm font-medium text-slate-400">Bullshit Intensity:</label>
-        <span className="text-sm font-medium text-amber-400">
+    <div className="mb-10 select-none">
+      <div className="flex justify-between items-center mb-4">
+        <label className="text-sm font-medium text-slate-400">Bullshit Intensity</label>
+        <span className={`text-sm font-bold transition-all duration-300 ${
+          currentIndex === 0 ? 'text-amber-400' : 
+          currentIndex === 1 ? 'text-orange-400' : 'text-red-400'
+        }`}>
           {currentLevel.emoji} {currentLevel.label}
         </span>
       </div>
       
-      {/* Slider track */}
-      <div className="relative pt-2 pb-6">
-        <div className="h-3 bg-slate-700 rounded-full relative overflow-hidden">
-          {/* Filled portion */}
-          <div 
-            className="absolute h-full bg-gradient-to-r from-amber-600 via-orange-500 to-red-500 rounded-full transition-all duration-300 ease-out"
-            style={{ width: `${((currentIndex + 1) / BS_LEVELS.length) * 100}%` }}
-          />
-          
-          {/* Glow effect */}
-          <div 
-            className="absolute h-full bg-gradient-to-r from-amber-400 via-orange-400 to-red-400 rounded-full blur-sm opacity-50 transition-all duration-300 ease-out"
-            style={{ width: `${((currentIndex + 1) / BS_LEVELS.length) * 100}%` }}
-          />
-        </div>
+      {/* Slider container */}
+      <div className="relative h-16">
+        {/* Track background */}
+        <div className="absolute top-6 left-0 right-0 h-2 bg-slate-700/80 rounded-full" />
         
-        {/* Clickable zones and labels */}
-        <div className="absolute inset-x-0 top-0 flex">
-          {BS_LEVELS.map((lvl, index) => (
+        {/* Filled track */}
+        <div 
+          className="absolute top-6 left-0 h-2 rounded-full transition-all duration-200 ease-out"
+          style={{ 
+            width: `${thumbPosition}%`,
+            background: currentIndex === 0 
+              ? 'linear-gradient(to right, #f59e0b, #f59e0b)' 
+              : currentIndex === 1 
+                ? 'linear-gradient(to right, #f59e0b, #f97316)' 
+                : 'linear-gradient(to right, #f59e0b, #f97316, #ef4444)'
+          }}
+        />
+        
+        {/* Tick marks */}
+        {BS_LEVELS.map((lvl, index) => {
+          const position = (index / (BS_LEVELS.length - 1)) * 100;
+          const isActive = index <= currentIndex;
+          return (
             <button
               key={lvl.id}
               onClick={() => onChange(lvl.id)}
-              className="flex-1 h-8 cursor-pointer group"
-              title={lvl.description}
+              className="absolute top-6 -translate-x-1/2 flex flex-col items-center cursor-pointer group"
+              style={{ left: `${position}%` }}
             >
-              {/* Dot marker */}
-              <div 
-                className={`absolute top-1/2 -translate-y-1/2 w-5 h-5 rounded-full border-2 transition-all duration-300 ease-out ${
-                  index <= currentIndex 
-                    ? 'bg-white border-amber-400 shadow-lg shadow-amber-500/30 scale-110' 
-                    : 'bg-slate-600 border-slate-500 group-hover:border-slate-400'
-                }`}
-                style={{ left: `calc(${((index + 0.5) / BS_LEVELS.length) * 100}% - 10px)` }}
-              />
-            </button>
-          ))}
-        </div>
-        
-        {/* Labels below */}
-        <div className="absolute top-8 inset-x-0 flex">
-          {BS_LEVELS.map((lvl, index) => (
-            <div 
-              key={lvl.id}
-              className="flex-1 text-center"
-            >
-              <span className={`text-xs transition-colors duration-200 ${
-                index <= currentIndex ? 'text-slate-300' : 'text-slate-500'
+              {/* Tick */}
+              <div className={`w-1 h-2 rounded-full transition-all duration-200 ${
+                isActive ? 'bg-white' : 'bg-slate-600 group-hover:bg-slate-500'
+              }`} />
+              {/* Label */}
+              <span className={`mt-3 text-xs font-medium transition-all duration-200 whitespace-nowrap ${
+                isActive ? 'text-slate-300' : 'text-slate-600 group-hover:text-slate-500'
               }`}>
-                {lvl.emoji}
+                {lvl.emoji} {lvl.label}
               </span>
-            </div>
-          ))}
+            </button>
+          );
+        })}
+        
+        {/* Native range input for drag behavior */}
+        <input
+          type="range"
+          min="0"
+          max={BS_LEVELS.length - 1}
+          value={currentIndex}
+          onChange={handleSliderChange}
+          onMouseDown={() => setIsDragging(true)}
+          onMouseUp={() => setIsDragging(false)}
+          onTouchStart={() => setIsDragging(true)}
+          onTouchEnd={() => setIsDragging(false)}
+          className="absolute top-4 left-0 w-full h-6 opacity-0 cursor-pointer z-10"
+          style={{ touchAction: 'none' }}
+        />
+        
+        {/* Custom thumb */}
+        <div 
+          className={`absolute top-4 -translate-x-1/2 transition-all ease-out pointer-events-none ${
+            isDragging ? 'duration-75 scale-110' : 'duration-200'
+          }`}
+          style={{ left: `${thumbPosition}%` }}
+        >
+          <div className={`w-6 h-6 rounded-full border-4 shadow-lg transition-all duration-200 ${
+            currentIndex === 0 
+              ? 'bg-amber-500 border-amber-300 shadow-amber-500/50' 
+              : currentIndex === 1 
+                ? 'bg-orange-500 border-orange-300 shadow-orange-500/50' 
+                : 'bg-red-500 border-red-300 shadow-red-500/50'
+          } ${isDragging ? 'shadow-xl' : ''}`} />
         </div>
       </div>
       
       {/* Description */}
-      <p className="text-xs text-slate-500 text-center italic transition-all duration-200">
+      <p className={`text-xs text-center italic mt-2 transition-all duration-300 ${
+        currentIndex === 0 ? 'text-amber-400/70' : 
+        currentIndex === 1 ? 'text-orange-400/70' : 'text-red-400/70'
+      }`}>
         {currentLevel.description}
       </p>
     </div>
