@@ -84,7 +84,7 @@ function BSLevelSlider({ level, onChange }: { level: BSLevel; onChange: (level: 
   const thumbPosition = (currentIndex / (BS_LEVELS.length - 1)) * 100;
   
   return (
-    <div className="mb-12 select-none">
+    <div className="mb-6 select-none">
       {/* Header */}
       <div className="flex justify-between items-center mb-3">
         <label className="text-sm font-display text-slate-400 uppercase tracking-wider">BS Level</label>
@@ -173,20 +173,20 @@ function BSLevelSlider({ level, onChange }: { level: BSLevel; onChange: (level: 
         />
       </div>
       
-      {/* Level labels below */}
-      <div className="flex justify-between mt-3 px-2">
+      {/* Level labels + description in one row */}
+      <div className="flex items-center justify-between mt-3 px-1">
         {BS_LEVELS.map((lvl, index) => {
           const isActive = index === currentIndex;
           return (
             <button
               key={lvl.id}
               onClick={() => onChange(lvl.id)}
-              className={`flex flex-col items-center gap-1 transition-all duration-200 ${
-                isActive ? 'scale-105' : 'opacity-50 hover:opacity-75'
+              className={`flex flex-col items-center gap-0.5 transition-all duration-200 ${
+                isActive ? 'scale-105' : 'opacity-40 hover:opacity-70'
               }`}
             >
-              <span className="text-lg">{lvl.emoji}</span>
-              <span className={`text-xs font-medium ${
+              <span className="text-xl">{lvl.emoji}</span>
+              <span className={`text-xs font-display ${
                 isActive 
                   ? index === 0 ? 'text-amber-400' : index === 1 ? 'text-orange-400' : 'text-red-400'
                   : 'text-slate-500'
@@ -198,10 +198,10 @@ function BSLevelSlider({ level, onChange }: { level: BSLevel; onChange: (level: 
         })}
       </div>
       
-      {/* Description */}
-      <p className={`text-xs text-center italic mt-3 transition-all duration-300 ${
-        currentIndex === 0 ? 'text-amber-400/60' : 
-        currentIndex === 1 ? 'text-orange-400/60' : 'text-red-400/60'
+      {/* Description - centered */}
+      <p className={`text-xs text-center italic mt-2 transition-all duration-300 ${
+        currentIndex === 0 ? 'text-amber-400/70' : 
+        currentIndex === 1 ? 'text-orange-400/70' : 'text-red-400/70'
       }`}>
         {currentLevel.description}
       </p>
@@ -265,9 +265,9 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
-      <div className="container mx-auto px-4 py-12 max-w-3xl">
+      <div className="container mx-auto px-4 py-8 max-w-3xl">
         {/* Header */}
-        <div className="text-center mb-8">
+        <div className="text-center mb-6">
           <div className="flex items-center justify-center gap-4 mb-3">
             <img src="/logo.png" alt="CoproChat" className="h-28 drop-shadow-2xl" />
             <h1 className="text-6xl font-display bg-gradient-to-r from-amber-400 to-yellow-500 bg-clip-text text-transparent">
@@ -383,7 +383,7 @@ function App() {
         )}
 
         {/* Examples */}
-        <div className="mt-12 pt-8 border-t border-slate-800">
+        <div className="mt-8 pt-6 border-t border-slate-800">
           <h3 className="text-sm font-medium text-slate-400 mb-4">Try these (click to load):</h3>
           <div className="flex flex-wrap gap-2">
             {examples.map((example) => (
@@ -399,7 +399,7 @@ function App() {
         </div>
 
         {/* Footer */}
-        <div className="mt-12 text-center text-slate-500 text-sm">
+        <div className="mt-8 text-center text-slate-500 text-sm">
           <p>Inspired by the $280k IT Director's Guide to Corporate Survival</p>
         </div>
       </div>
