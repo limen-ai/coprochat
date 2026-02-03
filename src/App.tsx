@@ -234,8 +234,7 @@ function App() {
 
         {/* Footer */}
         <div className="mt-12 text-center text-slate-500 text-sm">
-          <p>Built by <a href="https://minimumclicks.com" className="text-amber-400 hover:underline">Minimum Clicks</a></p>
-          <p className="mt-1">Inspired by the $280k IT Director's Guide to Corporate Survival</p>
+          <p>Inspired by the $280k IT Director's Guide to Corporate Survival</p>
         </div>
       </div>
     </div>

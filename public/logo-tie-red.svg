@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- Red Corporate Tie -->
+  <defs>
+    <linearGradient id="tieGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#DC2626"/>
+      <stop offset="100%" style="stop-color:#991B1B"/>
+    </linearGradient>
+  </defs>
+  <!-- Tie knot -->
+  <path d="M40 8 L60 8 L58 20 L42 20 Z" fill="url(#tieGrad)"/>
+  <!-- Tie body -->
+  <path d="M42 20 L50 92 L58 20 Z" fill="url(#tieGrad)"/>
+  <!-- Collar hints -->
+  <path d="M30 5 L40 8 L40 15 L25 10 Z" fill="#1E293B"/>
+  <path d="M70 5 L60 8 L60 15 L75 10 Z" fill="#1E293B"/>
+</svg>

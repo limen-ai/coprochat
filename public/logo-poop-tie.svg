@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- Poop with a Tie -->
+  <defs>
+    <linearGradient id="poopGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#92400E"/>
+      <stop offset="100%" style="stop-color:#78350F"/>
+    </linearGradient>
+    <linearGradient id="redTie" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#DC2626"/>
+      <stop offset="100%" style="stop-color:#991B1B"/>
+    </linearGradient>
+  </defs>
+  <!-- Poop body - bottom layer -->
+  <ellipse cx="50" cy="82" rx="38" ry="14" fill="url(#poopGrad)"/>
+  <!-- Poop body - middle layer -->
+  <ellipse cx="50" cy="62" rx="30" ry="12" fill="url(#poopGrad)"/>
+  <!-- Poop body - top layer -->
+  <ellipse cx="50" cy="45" rx="22" ry="10" fill="url(#poopGrad)"/>
+  <!-- Poop swirl top -->
+  <path d="M50 20 Q65 25 55 35 Q45 45 50 45" fill="url(#poopGrad)" stroke="url(#poopGrad)" stroke-width="8" stroke-linecap="round"/>
+  <!-- Eyes -->
+  <circle cx="42" cy="42" r="4" fill="white"/>
+  <circle cx="58" cy="42" r="4" fill="white"/>
+  <circle cx="43" cy="43" r="2" fill="#1E293B"/>
+  <circle cx="59" cy="43" r="2" fill="#1E293B"/>
+  <!-- Smile -->
+  <path d="M42 52 Q50 58 58 52" fill="none" stroke="#1E293B" stroke-width="2" stroke-linecap="round"/>
+  <!-- Mini tie -->
+  <path d="M47 55 L53 55 L52 60 L48 60 Z" fill="url(#redTie)"/>
+  <path d="M48 60 L50 78 L52 60 Z" fill="url(#redTie)"/>
+</svg>
