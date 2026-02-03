@@ -84,61 +84,80 @@ function BSLevelSlider({ level, onChange }: { level: BSLevel; onChange: (level: 
   const thumbPosition = (currentIndex / (BS_LEVELS.length - 1)) * 100;
   
   return (
-    <div className="mb-10 select-none">
-      <div className="flex justify-between items-center mb-4">
-        <label className="text-sm font-medium text-slate-400">Bullshit Intensity</label>
-        <span className={`text-sm font-bold transition-all duration-300 ${
+    <div className="mb-12 select-none">
+      {/* Header */}
+      <div className="flex justify-between items-center mb-3">
+        <label className="text-sm font-medium text-slate-400 uppercase tracking-wider">BS Level</label>
+        <span className={`text-sm font-black uppercase tracking-wide transition-all duration-300 ${
           currentIndex === 0 ? 'text-amber-400' : 
           currentIndex === 1 ? 'text-orange-400' : 'text-red-400'
         }`}>
-          {currentLevel.emoji} {currentLevel.label}
+          {currentLevel.label}
         </span>
       </div>
       
-      {/* Slider container */}
-      <div className="relative h-16">
-        {/* Track background */}
-        <div className="absolute top-6 left-0 right-0 h-2 bg-slate-700/80 rounded-full" />
+      {/* Winamp-style slider */}
+      <div className="relative h-12 bg-slate-800 rounded-lg border border-slate-700 shadow-inner overflow-hidden">
+        {/* Track groove */}
+        <div className="absolute inset-y-2 left-4 right-4">
+          {/* Background groove */}
+          <div className="absolute inset-y-0 left-0 right-0 bg-slate-900 rounded-sm shadow-inner" />
+          
+          {/* Filled portion with metallic gradient */}
+          <div 
+            className="absolute inset-y-0 left-0 rounded-sm transition-all duration-150 ease-out"
+            style={{ 
+              width: `${thumbPosition}%`,
+              background: currentIndex === 0 
+                ? 'linear-gradient(to bottom, #fbbf24, #d97706, #b45309)' 
+                : currentIndex === 1 
+                  ? 'linear-gradient(to bottom, #fb923c, #ea580c, #c2410c)' 
+                  : 'linear-gradient(to bottom, #f87171, #dc2626, #b91c1c)',
+              boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.3), inset 0 -1px 0 rgba(0,0,0,0.3)'
+            }}
+          />
+          
+          {/* Notch markers */}
+          {BS_LEVELS.map((_, index) => {
+            const position = (index / (BS_LEVELS.length - 1)) * 100;
+            return (
+              <div
+                key={index}
+                className="absolute top-1/2 -translate-y-1/2 w-0.5 h-3 bg-slate-600"
+                style={{ left: `${position}%` }}
+              />
+            );
+          })}
+        </div>
         
-        {/* Filled track */}
+        {/* Heavy rectangular thumb (Winamp fader style) */}
         <div 
-          className="absolute top-6 left-0 h-2 rounded-full transition-all duration-200 ease-out"
-          style={{ 
-            width: `${thumbPosition}%`,
-            background: currentIndex === 0 
-              ? 'linear-gradient(to right, #f59e0b, #f59e0b)' 
-              : currentIndex === 1 
-                ? 'linear-gradient(to right, #f59e0b, #f97316)' 
-                : 'linear-gradient(to right, #f59e0b, #f97316, #ef4444)'
-          }}
-        />
+          className={`absolute top-1 bottom-1 -translate-x-1/2 transition-all pointer-events-none ${
+            isDragging ? 'duration-50' : 'duration-150 ease-out'
+          }`}
+          style={{ left: `calc(16px + ${thumbPosition}% * (100% - 32px) / 100%)` }}
+        >
+          <div className={`relative w-5 h-full rounded-sm transition-all duration-150 ${
+            isDragging ? 'scale-x-110' : ''
+          }`}
+          style={{
+            background: 'linear-gradient(to bottom, #e2e8f0, #94a3b8, #64748b, #475569)',
+            boxShadow: isDragging 
+              ? '0 0 12px rgba(255,255,255,0.4), inset 0 1px 0 rgba(255,255,255,0.8), inset 0 -1px 0 rgba(0,0,0,0.4)' 
+              : 'inset 0 1px 0 rgba(255,255,255,0.6), inset 0 -1px 0 rgba(0,0,0,0.3), 0 2px 4px rgba(0,0,0,0.3)'
+          }}>
+            {/* Grip lines */}
+            <div className="absolute inset-x-1 top-1/2 -translate-y-1/2 flex flex-col gap-0.5">
+              <div className="h-px bg-slate-600/60" />
+              <div className="h-px bg-slate-400/40" />
+              <div className="h-px bg-slate-600/60" />
+              <div className="h-px bg-slate-400/40" />
+              <div className="h-px bg-slate-600/60" />
+            </div>
+          </div>
+        </div>
         
-        {/* Tick marks */}
-        {BS_LEVELS.map((lvl, index) => {
-          const position = (index / (BS_LEVELS.length - 1)) * 100;
-          const isActive = index <= currentIndex;
-          return (
-            <button
-              key={lvl.id}
-              onClick={() => onChange(lvl.id)}
-              className="absolute top-6 -translate-x-1/2 flex flex-col items-center cursor-pointer group"
-              style={{ left: `${position}%` }}
-            >
-              {/* Tick */}
-              <div className={`w-1 h-2 rounded-full transition-all duration-200 ${
-                isActive ? 'bg-white' : 'bg-slate-600 group-hover:bg-slate-500'
-              }`} />
-              {/* Label */}
-              <span className={`mt-3 text-xs font-medium transition-all duration-200 whitespace-nowrap ${
-                isActive ? 'text-slate-300' : 'text-slate-600 group-hover:text-slate-500'
-              }`}>
-                {lvl.emoji} {lvl.label}
-              </span>
-            </button>
-          );
-        })}
-        
-        {/* Native range input for drag behavior */}
+        {/* Invisible range input */}
         <input
           type="range"
           min="0"
@@ -147,33 +166,42 @@ function BSLevelSlider({ level, onChange }: { level: BSLevel; onChange: (level: 
           onChange={handleSliderChange}
           onMouseDown={() => setIsDragging(true)}
           onMouseUp={() => setIsDragging(false)}
+          onMouseLeave={() => setIsDragging(false)}
           onTouchStart={() => setIsDragging(true)}
           onTouchEnd={() => setIsDragging(false)}
-          className="absolute top-4 left-0 w-full h-6 opacity-0 cursor-pointer z-10"
-          style={{ touchAction: 'none' }}
+          className="absolute inset-0 w-full h-full opacity-0 cursor-grab active:cursor-grabbing z-10"
         />
-        
-        {/* Custom thumb */}
-        <div 
-          className={`absolute top-4 -translate-x-1/2 transition-all ease-out pointer-events-none ${
-            isDragging ? 'duration-75 scale-110' : 'duration-200'
-          }`}
-          style={{ left: `${thumbPosition}%` }}
-        >
-          <div className={`w-6 h-6 rounded-full border-4 shadow-lg transition-all duration-200 ${
-            currentIndex === 0 
-              ? 'bg-amber-500 border-amber-300 shadow-amber-500/50' 
-              : currentIndex === 1 
-                ? 'bg-orange-500 border-orange-300 shadow-orange-500/50' 
-                : 'bg-red-500 border-red-300 shadow-red-500/50'
-          } ${isDragging ? 'shadow-xl' : ''}`} />
-        </div>
+      </div>
+      
+      {/* Level labels below */}
+      <div className="flex justify-between mt-3 px-2">
+        {BS_LEVELS.map((lvl, index) => {
+          const isActive = index === currentIndex;
+          return (
+            <button
+              key={lvl.id}
+              onClick={() => onChange(lvl.id)}
+              className={`flex flex-col items-center gap-1 transition-all duration-200 ${
+                isActive ? 'scale-105' : 'opacity-50 hover:opacity-75'
+              }`}
+            >
+              <span className="text-lg">{lvl.emoji}</span>
+              <span className={`text-xs font-medium ${
+                isActive 
+                  ? index === 0 ? 'text-amber-400' : index === 1 ? 'text-orange-400' : 'text-red-400'
+                  : 'text-slate-500'
+              }`}>
+                {lvl.label}
+              </span>
+            </button>
+          );
+        })}
       </div>
       
       {/* Description */}
-      <p className={`text-xs text-center italic mt-2 transition-all duration-300 ${
-        currentIndex === 0 ? 'text-amber-400/70' : 
-        currentIndex === 1 ? 'text-orange-400/70' : 'text-red-400/70'
+      <p className={`text-xs text-center italic mt-3 transition-all duration-300 ${
+        currentIndex === 0 ? 'text-amber-400/60' : 
+        currentIndex === 1 ? 'text-orange-400/60' : 'text-red-400/60'
       }`}>
         {currentLevel.description}
       </p>
