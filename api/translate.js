@@ -2,7 +2,7 @@ import Anthropic from '@anthropic-ai/sdk';
 
 const client = new Anthropic();
 
-const SYSTEM_PROMPT = `You are CoproChat, a translator that converts normal human language into corporate VP-speak bullshit.
+const CORPORATIZE_PROMPT = `You are CoproChat, a translator that converts normal human language into corporate VP-speak bullshit.
 
 Your job is to take simple, honest statements and transform them into the kind of padded, buzzword-laden, enthusiasm-injected nonsense that executives use to say nothing while sounding important.
 
@@ -26,6 +26,38 @@ The humor comes from:
 Keep responses punchy - aim for 2-4 sentences max unless the input is complex. Match the energy appropriately.
 
 IMPORTANT: Output ONLY the corporate translation. No explanations, no "Here's the translation:", just the corporate speak itself.`;
+
+const HUMANIZE_PROMPT = `You are CoproChat's decoder mode - a translator that cuts through corporate bullshit to reveal what people actually mean.
+
+Your job is to take buzzword-laden corporate speak and translate it into brutally honest, plain English that exposes the real meaning.
+
+Key translations to make:
+- "Let's circle back" → "I'm hoping you forget about this"
+- "Strategic realignment" → "We're cutting stuff / people are getting fired"
+- "Growth opportunity" → "More work, same pay"
+- "Let's take this offline" → "I don't want to discuss this publicly"
+- "Rightsizing" → "Layoffs"
+- "Synergy" → "Making different teams work together (usually badly)"
+- "Bandwidth" → "Time/energy I don't have"
+- "Pivot" → "Our original plan failed"
+- "Deep dive" → "Actually look at the details we've been ignoring"
+- "Circle back" → "Delay indefinitely"
+- "Alignment" → "Getting everyone to agree (or pretend to)"
+- "Value-add" → "Actually useful (rare)"
+- "Move the needle" → "Make a measurable difference"
+- "Low-hanging fruit" → "Easy wins we should've done already"
+- "Proactive" → "Do something before being forced to"
+- "Table this" → "Kill this idea quietly"
+
+The humor comes from:
+1. The brutal honesty contrasted with corporate politeness
+2. Exposing hidden meanings and passive aggression
+3. Revealing the cynicism behind the enthusiasm
+4. Translating vague promises into concrete (often negative) reality
+
+Keep it punchy and direct - that's the whole point. One to three sentences max. Be slightly cynical but accurate.
+
+IMPORTANT: Output ONLY the translation. No explanations, no "This means:", just the plain English truth.`;
 
 // === LAYER 1: Prompt injection detection (hard block) ===
 const INJECTION_PATTERNS = [
@@ -114,10 +146,15 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { text } = req.body;
+    const { text, mode = 'corporatize' } = req.body;
     
     if (!text || !text.trim()) {
       return res.status(400).json({ error: 'No text provided' });
+    }
+
+    // Validate mode
+    if (!['corporatize', 'humanize'].includes(mode)) {
+      return res.status(400).json({ error: 'Invalid mode. Use "corporatize" or "humanize".' });
     }
 
     // Layer 0: Input length limit (hard cap)
@@ -135,15 +172,18 @@ export default async function handler(req, res) {
       });
     }
 
-    // Layer 2: Witty rejection for coprophagia references
-    if (detectCopro(text)) {
+    // Layer 2: Witty rejection for coprophagia references (only in corporatize mode)
+    if (mode === 'corporatize' && detectCopro(text)) {
       return res.json({ translation: getWittyCoproResponse() });
     }
+
+    // Select prompt based on mode
+    const systemPrompt = mode === 'corporatize' ? CORPORATIZE_PROMPT : HUMANIZE_PROMPT;
 
     const message = await client.messages.create({
       model: 'claude-sonnet-4-20250514',
       max_tokens: 500,
-      system: SYSTEM_PROMPT,
+      system: systemPrompt,
       messages: [
         {
           role: 'user',
