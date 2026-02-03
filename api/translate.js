@@ -98,9 +98,49 @@ Your job is to take simple, honest statements and transform them into the kind o
 - Passive-aggressive undertones
 - Complete avoidance of direct answers
 
-Keep responses punchy - aim for 2-4 sentences max unless the input is complex. Vary your vocabulary - don't repeat the same phrases. Match the energy appropriately.
+Keep responses punchy. Vary your vocabulary - don't repeat the same phrases. Match the energy appropriately.
 
 IMPORTANT: Output ONLY the corporate translation. No explanations, no "Here's the translation:", just the corporate speak itself.`;
+
+// Level-specific modifiers
+const LEVEL_MODIFIERS = {
+  pm: `
+## INTENSITY: PRODUCT MANAGER (Light)
+- Keep it relatively short (1-2 sentences)
+- Use 2-3 buzzwords max, stay somewhat readable
+- Light padding, still gets to the point eventually
+- Maybe one emoji, maybe none
+- Some jargon but not overwhelming
+- You're translating for someone who still needs to ship things
+- Example: "No" → "That's not currently in our roadmap, but let's revisit next quarter."`,
+
+  director: `
+## INTENSITY: DIRECTOR (Medium)
+- Medium length (2-3 sentences)
+- Healthy amount of buzzwords and jargon
+- Add some padding and deflection
+- 1-2 emoji allowed
+- Start adding passive-aggressive undertones
+- Balance between sounding important and still communicating
+- Example: "No" → "I appreciate the creative thinking here. From a strategic alignment perspective, this doesn't quite map to our current OKRs. Let's parking lot this and circle back when we have more bandwidth to properly evaluate the opportunity. 📊"`,
+
+  vp: `
+## INTENSITY: VP (Maximum Bullshit)
+- Go long (3-5 sentences of pure theatre)
+- MAXIMUM buzzwords, layer them thick
+- Heavy padding, say nothing with many words
+- 2-3 emoji minimum 🚀💪📈
+- Fake enthusiasm cranked to 11
+- Deflect all responsibility, everything is "the team" or "we as an org"
+- Add hollow calls to action at the end
+- Bonus points for making bad news sound like an exciting opportunity
+- Example: "No" → "Love the energy and innovative thinking here! 🙌 This is exactly the kind of blue-sky ideation we need more of. That said, as we pressure-test this against our north star metrics and strategic pillars, I want to make sure we're being thoughtful about resource allocation and stakeholder alignment. Let's take this offline and socialize it with the broader leadership team to ensure we're setting ourselves up for success. Excited to see how we can potentially integrate elements of this into our Q3 planning! Keep the ideas flowing! 🚀💡"`
+};
+
+function getPromptForLevel(level) {
+  const modifier = LEVEL_MODIFIERS[level] || LEVEL_MODIFIERS.director;
+  return CORPORATIZE_PROMPT + '\n' + modifier;
+}
 
 const HUMANIZE_PROMPT = `You are CoproChat's decoder mode - a translator that cuts through corporate bullshit to reveal what people actually mean.
 
@@ -282,7 +322,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { text, mode = 'corporatize' } = req.body;
+    const { text, mode = 'corporatize', level = 'director' } = req.body;
     
     if (!text || !text.trim()) {
       return res.status(400).json({ error: 'No text provided' });
@@ -291,6 +331,11 @@ export default async function handler(req, res) {
     // Validate mode
     if (!['corporatize', 'humanize'].includes(mode)) {
       return res.status(400).json({ error: 'Invalid mode. Use "corporatize" or "humanize".' });
+    }
+
+    // Validate level
+    if (!['pm', 'director', 'vp'].includes(level)) {
+      return res.status(400).json({ error: 'Invalid level. Use "pm", "director", or "vp".' });
     }
 
     // Layer 0: Input length limit (hard cap)
@@ -313,8 +358,8 @@ export default async function handler(req, res) {
       return res.json({ translation: getWittyCoproResponse() });
     }
 
-    // Select prompt based on mode
-    const systemPrompt = mode === 'corporatize' ? CORPORATIZE_PROMPT : HUMANIZE_PROMPT;
+    // Select prompt based on mode and level
+    const systemPrompt = mode === 'corporatize' ? getPromptForLevel(level) : HUMANIZE_PROMPT;
 
     const message = await client.messages.create({
       model: 'claude-sonnet-4-20250514',

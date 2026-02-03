@@ -3,6 +3,13 @@ import { useState } from 'react'
 const MAX_LENGTH = 500;
 
 type Mode = 'corporatize' | 'humanize';
+type BSLevel = 'pm' | 'director' | 'vp';
+
+const BS_LEVELS: { id: BSLevel; label: string; emoji: string; description: string }[] = [
+  { id: 'pm', label: 'Product Manager', emoji: '📋', description: 'Light jargon, still human' },
+  { id: 'director', label: 'Director', emoji: '📊', description: 'Heavy buzzwords, some fluff' },
+  { id: 'vp', label: 'VP', emoji: '🚀', description: 'Maximum synergy, pure theatre' },
+];
 
 const EXAMPLES = {
   corporatize: [
@@ -64,8 +71,85 @@ const UI_TEXT = {
   },
 };
 
+function BSLevelSlider({ level, onChange }: { level: BSLevel; onChange: (level: BSLevel) => void }) {
+  const currentIndex = BS_LEVELS.findIndex(l => l.id === level);
+  const currentLevel = BS_LEVELS[currentIndex];
+  
+  return (
+    <div className="mb-6">
+      <div className="flex justify-between items-center mb-2">
+        <label className="text-sm font-medium text-slate-400">Bullshit Intensity:</label>
+        <span className="text-sm font-medium text-amber-400">
+          {currentLevel.emoji} {currentLevel.label}
+        </span>
+      </div>
+      
+      {/* Slider track */}
+      <div className="relative pt-2 pb-6">
+        <div className="h-3 bg-slate-700 rounded-full relative overflow-hidden">
+          {/* Filled portion */}
+          <div 
+            className="absolute h-full bg-gradient-to-r from-amber-600 via-orange-500 to-red-500 rounded-full transition-all duration-300 ease-out"
+            style={{ width: `${((currentIndex + 1) / BS_LEVELS.length) * 100}%` }}
+          />
+          
+          {/* Glow effect */}
+          <div 
+            className="absolute h-full bg-gradient-to-r from-amber-400 via-orange-400 to-red-400 rounded-full blur-sm opacity-50 transition-all duration-300 ease-out"
+            style={{ width: `${((currentIndex + 1) / BS_LEVELS.length) * 100}%` }}
+          />
+        </div>
+        
+        {/* Clickable zones and labels */}
+        <div className="absolute inset-x-0 top-0 flex">
+          {BS_LEVELS.map((lvl, index) => (
+            <button
+              key={lvl.id}
+              onClick={() => onChange(lvl.id)}
+              className="flex-1 h-8 cursor-pointer group"
+              title={lvl.description}
+            >
+              {/* Dot marker */}
+              <div 
+                className={`absolute top-1/2 -translate-y-1/2 w-5 h-5 rounded-full border-2 transition-all duration-300 ease-out ${
+                  index <= currentIndex 
+                    ? 'bg-white border-amber-400 shadow-lg shadow-amber-500/30 scale-110' 
+                    : 'bg-slate-600 border-slate-500 group-hover:border-slate-400'
+                }`}
+                style={{ left: `calc(${((index + 0.5) / BS_LEVELS.length) * 100}% - 10px)` }}
+              />
+            </button>
+          ))}
+        </div>
+        
+        {/* Labels below */}
+        <div className="absolute top-8 inset-x-0 flex">
+          {BS_LEVELS.map((lvl, index) => (
+            <div 
+              key={lvl.id}
+              className="flex-1 text-center"
+            >
+              <span className={`text-xs transition-colors duration-200 ${
+                index <= currentIndex ? 'text-slate-300' : 'text-slate-500'
+              }`}>
+                {lvl.emoji}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+      
+      {/* Description */}
+      <p className="text-xs text-slate-500 text-center italic transition-all duration-200">
+        {currentLevel.description}
+      </p>
+    </div>
+  );
+}
+
 function App() {
   const [mode, setMode] = useState<Mode>('corporatize')
+  const [bsLevel, setBsLevel] = useState<BSLevel>('director')
   const [input, setInput] = useState('')
   const [output, setOutput] = useState('')
   const [loading, setLoading] = useState(false)
@@ -91,7 +175,7 @@ function App() {
     setError('')
     
     try {
-      const response = await translate(input, mode)
+      const response = await translate(input, mode, bsLevel)
       setOutput(response)
     } catch (err) {
       setError(ui.errorText)
@@ -137,7 +221,7 @@ function App() {
         </div>
 
         {/* Mode Toggle */}
-        <div className="flex justify-center mb-8">
+        <div className="flex justify-center mb-6">
           <div className="inline-flex bg-slate-800 rounded-xl p-1">
             <button
               onClick={() => handleModeChange('corporatize')}
@@ -161,6 +245,11 @@ function App() {
             </button>
           </div>
         </div>
+
+        {/* BS Level Slider - only show in corporatize mode */}
+        {mode === 'corporatize' && (
+          <BSLevelSlider level={bsLevel} onChange={setBsLevel} />
+        )}
 
         {/* Input */}
         <div className="mb-6">
@@ -259,13 +348,13 @@ function App() {
 // Call the backend API
 const API_URL = import.meta.env.DEV ? 'http://localhost:3001' : '';
 
-async function translate(input: string, mode: Mode): Promise<string> {
+async function translate(input: string, mode: Mode, level: BSLevel): Promise<string> {
   const response = await fetch(`${API_URL}/api/translate`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ text: input, mode }),
+    body: JSON.stringify({ text: input, mode, level }),
   })
   
   if (!response.ok) {
