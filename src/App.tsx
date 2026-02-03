@@ -97,23 +97,23 @@ function BSLevelSlider({ level, onChange }: { level: BSLevel; onChange: (level: 
       </div>
       
       {/* Winamp-style slider */}
-      <div className="relative h-12 bg-slate-800 rounded-lg border border-slate-700 shadow-inner overflow-hidden">
-        {/* Track groove */}
-        <div className="absolute inset-y-2 left-4 right-4">
+      <div className="relative h-10 bg-slate-800 rounded-lg border border-slate-700 shadow-inner overflow-visible">
+        {/* Track groove - thinner */}
+        <div className="absolute top-1/2 -translate-y-1/2 left-4 right-4 h-1.5">
           {/* Background groove */}
-          <div className="absolute inset-y-0 left-0 right-0 bg-slate-900 rounded-sm shadow-inner" />
+          <div className="absolute inset-0 bg-slate-900 rounded-full shadow-inner" />
           
           {/* Filled portion with metallic gradient */}
           <div 
-            className="absolute inset-y-0 left-0 rounded-sm transition-all duration-150 ease-out"
+            className="absolute inset-y-0 left-0 rounded-full transition-all duration-150 ease-out"
             style={{ 
               width: `${thumbPosition}%`,
               background: currentIndex === 0 
-                ? 'linear-gradient(to bottom, #fbbf24, #d97706, #b45309)' 
+                ? 'linear-gradient(to bottom, #fbbf24, #d97706)' 
                 : currentIndex === 1 
-                  ? 'linear-gradient(to bottom, #fb923c, #ea580c, #c2410c)' 
-                  : 'linear-gradient(to bottom, #f87171, #dc2626, #b91c1c)',
-              boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.3), inset 0 -1px 0 rgba(0,0,0,0.3)'
+                  ? 'linear-gradient(to bottom, #fb923c, #ea580c)' 
+                  : 'linear-gradient(to bottom, #f87171, #dc2626)',
+              boxShadow: '0 0 8px rgba(251, 146, 60, 0.5)'
             }}
           />
           
@@ -123,36 +123,36 @@ function BSLevelSlider({ level, onChange }: { level: BSLevel; onChange: (level: 
             return (
               <div
                 key={index}
-                className="absolute top-1/2 -translate-y-1/2 w-0.5 h-3 bg-slate-600"
+                className="absolute top-1/2 -translate-y-1/2 w-0.5 h-2 bg-slate-600"
                 style={{ left: `${position}%` }}
               />
             );
           })}
         </div>
         
-        {/* Heavy rectangular thumb (Winamp fader style) */}
+        {/* Heavy rectangular thumb - taller, protrudes above */}
         <div 
-          className={`absolute top-1 bottom-1 -translate-x-1/2 transition-all pointer-events-none ${
+          className={`absolute top-1/2 -translate-y-1/2 -translate-x-1/2 transition-all pointer-events-none ${
             isDragging ? 'duration-50' : 'duration-150 ease-out'
           }`}
           style={{ left: `calc(16px + ${thumbPosition}% * (100% - 32px) / 100%)` }}
         >
-          <div className={`relative w-5 h-full rounded-sm transition-all duration-150 ${
-            isDragging ? 'scale-x-110' : ''
+          <div className={`relative w-4 h-14 -mt-2 rounded transition-all duration-150 ${
+            isDragging ? 'scale-105' : ''
           }`}
           style={{
-            background: 'linear-gradient(to bottom, #e2e8f0, #94a3b8, #64748b, #475569)',
+            background: 'linear-gradient(to bottom, #f1f5f9, #cbd5e1, #94a3b8, #64748b)',
             boxShadow: isDragging 
-              ? '0 0 12px rgba(255,255,255,0.4), inset 0 1px 0 rgba(255,255,255,0.8), inset 0 -1px 0 rgba(0,0,0,0.4)' 
-              : 'inset 0 1px 0 rgba(255,255,255,0.6), inset 0 -1px 0 rgba(0,0,0,0.3), 0 2px 4px rgba(0,0,0,0.3)'
+              ? '0 0 16px rgba(255,255,255,0.5), inset 0 1px 0 rgba(255,255,255,0.9), inset 0 -1px 0 rgba(0,0,0,0.4), 0 4px 8px rgba(0,0,0,0.4)' 
+              : 'inset 0 1px 0 rgba(255,255,255,0.7), inset 0 -1px 0 rgba(0,0,0,0.3), 0 2px 6px rgba(0,0,0,0.4)'
           }}>
             {/* Grip lines */}
-            <div className="absolute inset-x-1 top-1/2 -translate-y-1/2 flex flex-col gap-0.5">
-              <div className="h-px bg-slate-600/60" />
-              <div className="h-px bg-slate-400/40" />
-              <div className="h-px bg-slate-600/60" />
-              <div className="h-px bg-slate-400/40" />
-              <div className="h-px bg-slate-600/60" />
+            <div className="absolute inset-x-0.5 top-1/2 -translate-y-1/2 flex flex-col gap-1">
+              <div className="h-px bg-slate-500/70" />
+              <div className="h-px bg-slate-300/50" />
+              <div className="h-px bg-slate-500/70" />
+              <div className="h-px bg-slate-300/50" />
+              <div className="h-px bg-slate-500/70" />
             </div>
           </div>
         </div>
