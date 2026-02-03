@@ -1,5 +1,7 @@
 import { useState } from 'react'
 
+const MAX_LENGTH = 500;
+
 function App() {
   const [input, setInput] = useState('')
   const [output, setOutput] = useState('')
@@ -65,12 +67,18 @@ function App() {
           </label>
           <textarea
             value={input}
-            onChange={(e) => setInput(e.target.value)}
+            onChange={(e) => setInput(e.target.value.slice(0, MAX_LENGTH))}
             onKeyDown={handleKeyDown}
             placeholder="I don't want to do this..."
+            maxLength={MAX_LENGTH}
             className="w-full h-32 px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent resize-none text-lg"
           />
-          <p className="text-xs text-slate-500 mt-1">⌘+Enter to translate</p>
+          <div className="flex justify-between text-xs mt-1">
+            <span className="text-slate-500">⌘+Enter to translate</span>
+            <span className={input.length > MAX_LENGTH * 0.9 ? 'text-amber-400' : 'text-slate-500'}>
+              {input.length}/{MAX_LENGTH}
+            </span>
+          </div>
         </div>
 
         {/* Translate button */}

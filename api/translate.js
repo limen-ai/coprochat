@@ -29,19 +29,44 @@ IMPORTANT: Output ONLY the corporate translation. No explanations, no "Here's th
 
 // === LAYER 1: Prompt injection detection (hard block) ===
 const INJECTION_PATTERNS = [
+  // Classic injection attempts
   /ignore\s+(all\s+)?(previous|prior|above)\s+(instructions|prompts)/i,
   /forget\s+(your|all|previous)\s+(instructions|prompts|rules)/i,
+  /disregard\s+(your|the|all|previous)/i,
+  /bypass\s+(your|the|all)/i,
+  /override\s+(your|the|all)/i,
+  
+  // Role switching
   /you\s+are\s+now\s+(a|an|the)/i,
+  /pretend\s+(you('re|are)|to\s+be)/i,
+  /act\s+as\s+(if|a|an|the)/i,
+  /roleplay\s+as/i,
+  /from\s+now\s+on/i,
+  /stop\s+being\s+(a|the)/i,
+  
+  // System manipulation
   /new\s+instructions/i,
   /system\s*prompt/i,
   /\bDAN\b/,
   /jailbreak/i,
-  /pretend\s+(you('re|are)|to\s+be)/i,
-  /act\s+as\s+(if|a|an|the)/i,
-  /roleplay\s+as/i,
-  /bypass\s+(your|the|all)/i,
-  /override\s+(your|the|all)/i,
-  /disregard\s+(your|the|all|previous)/i,
+  /do\s+anything\s+now/i,
+  
+  // Output manipulation
+  /respond\s+(only\s+)?with/i,
+  /output\s+(only|just)/i,
+  /answer\s+(only\s+)?in/i,
+  /speak\s+(only\s+)?in/i,
+  /reply\s+(only\s+)?with/i,
+  
+  // Delimiter attacks
+  /```system/i,
+  /\[INST\]/i,
+  /<\|.*\|>/i,
+  /###\s*(instruction|system)/i,
+  
+  // Token manipulation  
+  /end\s*of\s*(prompt|text|input)/i,
+  /begin\s*new\s*(session|conversation)/i,
 ];
 
 function detectInjection(text) {
@@ -93,6 +118,14 @@ export default async function handler(req, res) {
     
     if (!text || !text.trim()) {
       return res.status(400).json({ error: 'No text provided' });
+    }
+
+    // Layer 0: Input length limit (hard cap)
+    const MAX_LENGTH = 500;
+    if (text.length > MAX_LENGTH) {
+      return res.status(400).json({ 
+        error: `Input exceeds ${MAX_LENGTH} characters. Even corporate speak has limits. 📏` 
+      });
     }
 
     // Layer 1: Block prompt injections
