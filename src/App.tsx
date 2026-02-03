@@ -87,8 +87,8 @@ function BSLevelSlider({ level, onChange }: { level: BSLevel; onChange: (level: 
     <div className="mb-12 select-none">
       {/* Header */}
       <div className="flex justify-between items-center mb-3">
-        <label className="text-sm font-medium text-slate-400 uppercase tracking-wider">BS Level</label>
-        <span className={`text-sm font-black uppercase tracking-wide transition-all duration-300 ${
+        <label className="text-sm font-display text-slate-400 uppercase tracking-wider">BS Level</label>
+        <span className={`text-sm font-display uppercase tracking-wide transition-all duration-300 ${
           currentIndex === 0 ? 'text-amber-400' : 
           currentIndex === 1 ? 'text-orange-400' : 'text-red-400'
         }`}>
@@ -270,7 +270,7 @@ function App() {
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-4 mb-3">
             <img src="/logo.png" alt="CoproChat" className="h-28 drop-shadow-2xl" />
-            <h1 className="text-6xl bg-gradient-to-r from-amber-400 to-yellow-500 bg-clip-text text-transparent" style={{ fontFamily: 'Righteous, cursive' }}>
+            <h1 className="text-6xl font-display bg-gradient-to-r from-amber-400 to-yellow-500 bg-clip-text text-transparent">
               CoproChat
             </h1>
           </div>
@@ -287,7 +287,7 @@ function App() {
           <div className="inline-flex bg-slate-800 rounded-xl p-1">
             <button
               onClick={() => handleModeChange('corporatize')}
-              className={`px-6 py-2.5 rounded-lg font-medium transition-all ${
+              className={`px-6 py-2.5 rounded-lg font-display text-lg transition-all ${
                 mode === 'corporatize'
                   ? 'bg-gradient-to-r from-amber-600 to-yellow-600 text-white shadow-lg'
                   : 'text-slate-400 hover:text-white'
@@ -297,7 +297,7 @@ function App() {
             </button>
             <button
               onClick={() => handleModeChange('humanize')}
-              className={`px-6 py-2.5 rounded-lg font-medium transition-all ${
+              className={`px-6 py-2.5 rounded-lg font-display text-lg transition-all ${
                 mode === 'humanize'
                   ? 'bg-gradient-to-r from-cyan-600 to-blue-600 text-white shadow-lg'
                   : 'text-slate-400 hover:text-white'
@@ -338,7 +338,7 @@ function App() {
         <button
           onClick={handleTranslate}
           disabled={!input.trim() || loading}
-          className={`w-full py-4 rounded-xl font-semibold text-lg transition-all transform hover:scale-[1.02] active:scale-[0.98] disabled:from-slate-700 disabled:to-slate-700 disabled:cursor-not-allowed ${
+          className={`w-full py-4 rounded-xl font-display text-xl transition-all transform hover:scale-[1.02] active:scale-[0.98] disabled:from-slate-700 disabled:to-slate-700 disabled:cursor-not-allowed ${
             mode === 'corporatize'
               ? 'bg-gradient-to-r from-amber-600 to-yellow-600 hover:from-amber-500 hover:to-yellow-500'
               : 'bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500'
