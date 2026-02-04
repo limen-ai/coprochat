@@ -198,13 +198,24 @@ function BSLevelSlider({ level, onChange }: { level: BSLevel; onChange: (level: 
         })}
       </div>
       
-      {/* Description - centered */}
-      <p className={`text-xs text-center italic mt-2 transition-all duration-300 ${
-        currentIndex === 0 ? 'text-amber-400/70' : 
-        currentIndex === 1 ? 'text-orange-400/70' : 'text-red-400/70'
-      }`}>
-        {currentLevel.description}
-      </p>
+      {/* Description - positioned under active icon */}
+      <div className="relative mt-2 px-4">
+        <p 
+          className={`text-xs italic transition-all duration-300 whitespace-nowrap ${
+            currentIndex === 0 ? 'text-amber-400/70' : 
+            currentIndex === 1 ? 'text-orange-400/70' : 'text-red-400/70'
+          }`}
+          style={{
+            position: 'absolute',
+            left: currentIndex === 0 ? '0' : currentIndex === 1 ? '50%' : '100%',
+            transform: currentIndex === 0 ? 'translateX(0)' : currentIndex === 1 ? 'translateX(-50%)' : 'translateX(-100%)',
+          }}
+        >
+          {currentLevel.description}
+        </p>
+        {/* Spacer for height */}
+        <p className="text-xs italic invisible">{currentLevel.description}</p>
+      </div>
     </div>
   );
 }
