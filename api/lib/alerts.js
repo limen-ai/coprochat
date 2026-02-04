@@ -1,4 +1,4 @@
-import { sql, checkInjectionSpike } from './lib/analytics.js';
+import { sql, checkInjectionSpike } from './analytics.js';
 
 const ALERT_EMAIL = process.env.ALERT_EMAIL || 'borisk@fastmail.com';
 const INJECTION_SPIKE_THRESHOLD = 10; // Alert if 10+ injections in 1 hour

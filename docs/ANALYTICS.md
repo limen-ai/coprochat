@@ -52,7 +52,9 @@ git push origin main
 
 ## Admin Dashboard
 
-Access at: `https://copro.chat/api/admin`
+Access at: `https://copro.chat/api/admin?token=YOUR_ADMIN_PASSWORD`
+
+**Authentication required** — uses `ADMIN_PASSWORD` env var. Without it, you get a login page.
 
 Features:
 - 24h stats: requests, unique IPs, injection attempts, errors

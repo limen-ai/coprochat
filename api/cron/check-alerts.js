@@ -1,4 +1,4 @@
-import { checkAndAlert } from './lib/alerts.js';
+import { checkAndAlert } from '../lib/alerts.js';
 
 // This endpoint is meant to be called by Vercel Cron or external scheduler
 // It checks for anomalies and sends alerts if needed

@@ -1,19 +1,56 @@
-import { getStats, checkAlertConditions } from '../lib/db.js';
+import { getDashboardStats, checkInjectionSpike } from './lib/analytics.js';
 
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || process.env.ADMIN_TOKEN || 'copro123';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+
+// Check for active alerts
+async function checkAlertConditions() {
+  const alerts = [];
+  const injectionCount = await checkInjectionSpike();
+  
+  if (injectionCount >= 10) {
+    alerts.push({
+      type: 'injection_spike',
+      severity: injectionCount >= 20 ? 'critical' : 'high',
+      message: `${injectionCount} injection attempts in last hour`
+    });
+  }
+  
+  return alerts;
+}
 
 export default async function handler(req, res) {
   // CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
 
+  // === AUTHENTICATION ===
+  // Check Authorization header (Bearer token) or ?token= query param
+  const authHeader = req.headers.authorization;
+  const queryToken = req.query?.token;
+  const providedToken = authHeader?.replace('Bearer ', '') || queryToken;
+  
+  if (!ADMIN_PASSWORD) {
+    // No password configured - block access entirely in production
+    return res.status(503).json({ 
+      error: 'Admin dashboard not configured. Set ADMIN_PASSWORD env var.' 
+    });
+  }
+  
+  if (providedToken !== ADMIN_PASSWORD) {
+    // Return login page for GET, 401 for API
+    if (req.method === 'GET' && !queryToken) {
+      return res.send(generateLoginHtml());
+    }
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
   try {
-    const stats = await getStats(24);
+    const stats = await getDashboardStats(24);
     const alerts = await checkAlertConditions();
     
     if (req.method === 'POST') {
@@ -32,8 +69,93 @@ export default async function handler(req, res) {
   }
 }
 
-function generateDashboardHtml(stats) {
+function generateLoginHtml() {
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CoproChat Admin</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { 
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0f172a;
+      color: #e2e8f0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .login-box {
+      background: #1e293b;
+      border-radius: 12px;
+      padding: 2rem;
+      border: 1px solid #334155;
+      width: 100%;
+      max-width: 400px;
+    }
+    h1 { 
+      font-size: 1.5rem; 
+      margin-bottom: 1.5rem;
+      text-align: center;
+    }
+    input {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      background: #0f172a;
+      color: #e2e8f0;
+      font-size: 1rem;
+      margin-bottom: 1rem;
+    }
+    input:focus { outline: none; border-color: #f59e0b; }
+    button {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      background: #f59e0b;
+      color: #0f172a;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    button:hover { background: #d97706; }
+  </style>
+</head>
+<body>
+  <div class="login-box">
+    <h1>💩 CoproChat Admin</h1>
+    <form onsubmit="login(event)">
+      <input type="password" id="token" placeholder="Admin token" autofocus />
+      <button type="submit">Access Dashboard</button>
+    </form>
+  </div>
+  <script>
+    function login(e) {
+      e.preventDefault();
+      const token = document.getElementById('token').value;
+      window.location.href = '/api/admin?token=' + encodeURIComponent(token);
+    }
+  </script>
+</body>
+</html>`;
+}
+
+function generateDashboardHtml(stats, alerts = []) {
   const formatNumber = (n) => n?.toLocaleString() || '0';
+  
+  const alertsHtml = alerts.length > 0 ? `
+    <div class="alerts">
+      ${alerts.map(a => `
+        <div class="alert alert-${a.severity}">
+          <strong>${a.severity.toUpperCase()}:</strong> ${a.message}
+        </div>
+      `).join('')}
+    </div>
+  ` : '';
   
   return `<!DOCTYPE html>
 <html lang="en">
@@ -159,12 +281,26 @@ function generateDashboardHtml(stats) {
       .two-col { grid-template-columns: 1fr; }
       body { padding: 1rem; }
     }
+    
+    .alerts { margin-bottom: 1.5rem; }
+    .alert {
+      padding: 1rem 1.25rem;
+      border-radius: 8px;
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+    }
+    .alert-critical { background: #dc262620; border: 1px solid #dc2626; color: #fca5a5; }
+    .alert-high { background: #ea580c20; border: 1px solid #ea580c; color: #fdba74; }
+    .alert-medium { background: #ca8a0420; border: 1px solid #ca8a04; color: #fde047; }
+    .alert-low { background: #16a34a20; border: 1px solid #16a34a; color: #86efac; }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>💩 CoproChat Analytics</h1>
     <p class="subtitle">Last 24 hours dashboard</p>
+    
+    ${alertsHtml}
     
     <div class="grid">
       <div class="card">
