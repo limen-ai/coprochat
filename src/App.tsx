@@ -5,10 +5,10 @@ const MAX_LENGTH = 500;
 type Mode = 'corporatize' | 'humanize';
 type BSLevel = 'pm' | 'director' | 'vp';
 
-const BS_LEVELS: { id: BSLevel; label: string; emoji: string; description: string }[] = [
-  { id: 'pm', label: 'Product Manager', emoji: '📋', description: 'Light jargon, still human' },
-  { id: 'director', label: 'Director', emoji: '📊', description: 'Heavy buzzwords, some fluff' },
-  { id: 'vp', label: 'VP', emoji: '🚀', description: 'Maximum synergy, pure theatre' },
+const BS_LEVELS: { id: BSLevel; label: string; icon: string; description: string }[] = [
+  { id: 'pm', label: 'Product Manager', icon: '/icon-pm.png', description: 'Light jargon, still human' },
+  { id: 'director', label: 'Director', icon: '/icon-director.png', description: 'Heavy buzzwords, some fluff' },
+  { id: 'vp', label: 'VP', icon: '/icon-vp.png', description: 'Maximum synergy, pure theatre' },
 ];
 
 const EXAMPLES = {
@@ -185,7 +185,7 @@ function BSLevelSlider({ level, onChange }: { level: BSLevel; onChange: (level: 
                 isActive ? 'scale-105' : 'opacity-40 hover:opacity-70'
               }`}
             >
-              <span className="text-xl">{lvl.emoji}</span>
+              <img src={lvl.icon} alt={lvl.label} className="w-8 h-8 object-contain" />
               <span className={`text-xs font-display ${
                 isActive 
                   ? index === 0 ? 'text-amber-400' : index === 1 ? 'text-orange-400' : 'text-red-400'
