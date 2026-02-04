@@ -185,7 +185,7 @@ function BSLevelSlider({ level, onChange }: { level: BSLevel; onChange: (level: 
                 isActive ? 'scale-105' : 'opacity-40 hover:opacity-70'
               }`}
             >
-              <img src={lvl.icon} alt={lvl.label} className="w-8 h-8 object-contain" />
+              <img src={lvl.icon} alt={lvl.label} className="w-12 h-12 object-contain drop-shadow-lg" />
               <span className={`text-xs font-display ${
                 isActive 
                   ? index === 0 ? 'text-amber-400' : index === 1 ? 'text-orange-400' : 'text-red-400'
