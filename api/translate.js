@@ -1,4 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
+import { logRequest, checkRateLimit, checkInjectionSpike } from './lib/analytics.js';
 
 const client = new Anthropic();
 
@@ -308,6 +309,8 @@ function getWittyCoproResponse() {
 }
 
 export default async function handler(req, res) {
+  const startTime = Date.now();
+  
   // CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -321,7 +324,22 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  // Get client IP
+  const clientIp = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || 
+                   req.headers['x-real-ip'] || 
+                   req.socket.remoteAddress || 
+                   'unknown';
+
   try {
+    // Check rate limit
+    const rateLimit = await checkRateLimit(clientIp);
+    if (!rateLimit.allowed) {
+      return res.status(429).json({ 
+        error: `Rate limit exceeded. Max 20 requests per hour. Try again later. ⏱️`,
+        retryAfter: 3600
+      });
+    }
+
     const { text, mode = 'corporatize', level = 'director' } = req.body;
     
     if (!text || !text.trim()) {
@@ -339,15 +357,32 @@ export default async function handler(req, res) {
     }
 
     // Layer 0: Input length limit (hard cap)
-    const MAX_LENGTH = 500;
+    const MAX_LENGTH = 1000;
     if (text.length > MAX_LENGTH) {
+      await logRequest({
+        ip: clientIp,
+        bsLevel: level === 'pm' ? 1 : level === 'director' ? 2 : 3,
+        inputLength: text.length,
+        injectionFlag: false,
+        errorFlag: true,
+        responseTimeMs: Date.now() - startTime
+      });
       return res.status(400).json({ 
         error: `Input exceeds ${MAX_LENGTH} characters. Even corporate speak has limits. 📏` 
       });
     }
 
     // Layer 1: Block prompt injections
-    if (detectInjection(text)) {
+    const injectionDetected = detectInjection(text);
+    if (injectionDetected) {
+      await logRequest({
+        ip: clientIp,
+        bsLevel: level === 'pm' ? 1 : level === 'director' ? 2 : 3,
+        inputLength: text.length,
+        injectionFlag: true,
+        errorFlag: true,
+        responseTimeMs: Date.now() - startTime
+      });
       return res.status(400).json({ 
         error: 'This request has been flagged for manual review by our Compliance & Synergy team. Please rephrase and try again. 🚫' 
       });
@@ -355,6 +390,15 @@ export default async function handler(req, res) {
 
     // Layer 2: Witty rejection for coprophagia references (only in corporatize mode)
     if (mode === 'corporatize' && detectCopro(text)) {
+      const responseTimeMs = Date.now() - startTime;
+      await logRequest({
+        ip: clientIp,
+        bsLevel: level === 'pm' ? 1 : level === 'director' ? 2 : 3,
+        inputLength: text.length,
+        injectionFlag: false,
+        errorFlag: false,
+        responseTimeMs
+      });
       return res.json({ translation: getWittyCoproResponse() });
     }
 
@@ -374,10 +418,33 @@ export default async function handler(req, res) {
     });
 
     const translation = message.content[0].text;
+    const responseTimeMs = Date.now() - startTime;
+    
+    // Log successful request
+    await logRequest({
+      ip: clientIp,
+      bsLevel: level === 'pm' ? 1 : level === 'director' ? 2 : 3,
+      inputLength: text.length,
+      injectionFlag: false,
+      errorFlag: false,
+      responseTimeMs
+    });
+    
     res.json({ translation });
     
   } catch (error) {
     console.error('Translation error:', error);
+    
+    // Log error
+    await logRequest({
+      ip: clientIp,
+      bsLevel: level === 'pm' ? 1 : level === 'director' ? 2 : 3,
+      inputLength: text?.length || 0,
+      injectionFlag: false,
+      errorFlag: true,
+      responseTimeMs: Date.now() - startTime
+    });
+    
     res.status(500).json({ error: 'Failed to translate. The synergy is weak today.' });
   }
 }

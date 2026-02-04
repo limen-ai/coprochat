@@ -4,5 +4,18 @@
   "framework": "vite",
   "rewrites": [
     { "source": "/api/:path*", "destination": "/api/:path*" }
-  ]
+  ],
+  "crons": [
+    {
+      "path": "/api/cron/check-alerts",
+      "schedule": "0 * * * *"
+    }
+  ],
+  "env": {
+    "DATABASE_URL": "@database_url",
+    "ADMIN_PASSWORD": "@admin_password",
+    "ALERT_EMAIL": "borisk@fastmail.com",
+    "RESEND_API_KEY": "@resend_api_key",
+    "CRON_SECRET": "@cron_secret"
+  }
 }
