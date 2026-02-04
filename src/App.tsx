@@ -173,23 +173,20 @@ function BSLevelSlider({ level, onChange }: { level: BSLevel; onChange: (level: 
         />
       </div>
       
-      {/* Level labels + description in one row */}
-      <div className="relative mt-3 mx-4 h-16 sm:h-20">
+      {/* Level icons */}
+      <div className="flex justify-between items-start mt-3 px-0">
         {BS_LEVELS.map((lvl, index) => {
           const isActive = index === currentIndex;
-          const position = index === 0 ? '0%' : index === 1 ? '50%' : '100%';
-          const transform = index === 0 ? 'translateX(0)' : index === 1 ? 'translateX(-50%)' : 'translateX(-100%)';
           return (
             <button
               key={lvl.id}
               onClick={() => onChange(lvl.id)}
-              className={`absolute flex flex-col items-center gap-0.5 transition-all duration-200 ${
+              className={`flex flex-col items-center gap-0.5 transition-all duration-200 w-1/3 ${
                 isActive ? 'scale-105' : 'opacity-40 hover:opacity-70'
               }`}
-              style={{ left: position, transform }}
             >
               <img src={lvl.icon} alt={lvl.label} className="w-8 h-8 sm:w-12 sm:h-12 object-contain drop-shadow-lg" />
-              <span className={`text-xs font-display ${
+              <span className={`text-xs font-display whitespace-nowrap ${
                 isActive 
                   ? index === 0 ? 'text-amber-400' : index === 1 ? 'text-orange-400' : 'text-red-400'
                   : 'text-slate-500'
