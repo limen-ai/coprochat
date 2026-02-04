@@ -174,7 +174,7 @@ function BSLevelSlider({ level, onChange }: { level: BSLevel; onChange: (level: 
       </div>
       
       {/* Level labels + description in one row */}
-      <div className="flex items-center justify-between mt-3 px-1">
+      <div className="flex items-center justify-between mt-3 px-4">
         {BS_LEVELS.map((lvl, index) => {
           const isActive = index === currentIndex;
           return (
