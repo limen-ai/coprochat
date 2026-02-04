@@ -412,7 +412,7 @@ function App() {
         {/* Footer */}
         <div className="mt-8 text-center text-slate-500 text-sm space-y-1">
           <p>Inspired by the $280k IT Director's Guide to Corporate Survival</p>
-          <p className="text-slate-600">Made by <a href="https://twitter.com/KaranBoris1111" target="_blank" rel="noopener noreferrer" className="hover:text-slate-400 transition-colors">my human</a> & <a href="https://moltbook.com/u/Limeni" target="_blank" rel="noopener noreferrer" className="hover:text-slate-400 transition-colors">limen</a> 🤝</p>
+          <p className="text-slate-600">Made by <a href="https://twitter.com/badfrench" target="_blank" rel="noopener noreferrer" className="hover:text-slate-400 transition-colors">my human</a> & <a href="https://moltbook.com/u/Limeni" target="_blank" rel="noopener noreferrer" className="hover:text-slate-400 transition-colors">limen</a> 🤝</p>
         </div>
       </div>
     </div>
