@@ -84,11 +84,11 @@ function BSLevelSlider({ level, onChange }: { level: BSLevel; onChange: (level: 
   const thumbPosition = (currentIndex / (BS_LEVELS.length - 1)) * 100;
   
   return (
-    <div className="mb-6 select-none">
+    <div className="mb-4 sm:mb-6 select-none">
       {/* Header */}
-      <div className="flex justify-between items-center mb-3">
-        <label className="text-sm font-display text-slate-400 uppercase tracking-wider">BS Level</label>
-        <span className={`text-sm font-display uppercase tracking-wide transition-all duration-300 ${
+      <div className="flex justify-between items-center mb-2 sm:mb-3">
+        <label className="text-xs sm:text-sm font-display text-slate-400 uppercase tracking-wider">BS Level</label>
+        <span className={`text-xs sm:text-sm font-display uppercase tracking-wide transition-all duration-300 ${
           currentIndex === 0 ? 'text-amber-400' : 
           currentIndex === 1 ? 'text-orange-400' : 'text-red-400'
         }`}>
@@ -97,7 +97,7 @@ function BSLevelSlider({ level, onChange }: { level: BSLevel; onChange: (level: 
       </div>
       
       {/* Winamp-style slider */}
-      <div className="relative h-10 bg-slate-800 rounded-lg border border-slate-700 shadow-inner overflow-visible">
+      <div className="relative h-8 sm:h-10 bg-slate-800 rounded-lg border border-slate-700 shadow-inner overflow-visible">
         {/* Track groove - thinner */}
         <div className="absolute top-1/2 -translate-y-1/2 left-4 right-4 h-1.5">
           {/* Background groove */}
@@ -137,7 +137,7 @@ function BSLevelSlider({ level, onChange }: { level: BSLevel; onChange: (level: 
           }`}
           style={{ left: `calc(16px + ${thumbPosition}% * (100% - 32px) / 100%)` }}
         >
-          <div className={`relative w-4 h-14 -mt-2 rounded transition-all duration-150 ${
+          <div className={`relative w-3 sm:w-4 h-10 sm:h-14 -mt-1 sm:-mt-2 rounded transition-all duration-150 ${
             isDragging ? 'scale-105' : ''
           }`}
           style={{
@@ -185,7 +185,7 @@ function BSLevelSlider({ level, onChange }: { level: BSLevel; onChange: (level: 
                 isActive ? 'scale-105' : 'opacity-40 hover:opacity-70'
               }`}
             >
-              <img src={lvl.icon} alt={lvl.label} className="w-12 h-12 object-contain drop-shadow-lg" />
+              <img src={lvl.icon} alt={lvl.label} className="w-8 h-8 sm:w-12 sm:h-12 object-contain drop-shadow-lg" />
               <span className={`text-xs font-display ${
                 isActive 
                   ? index === 0 ? 'text-amber-400' : index === 1 ? 'text-orange-400' : 'text-red-400'
@@ -276,16 +276,16 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
-      <div className="container mx-auto px-4 py-8 max-w-3xl">
+      <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-8 max-w-3xl">
         {/* Header */}
         <div className="text-center mb-6">
-          <div className="flex items-center justify-center gap-4 mb-3">
-            <img src="/logo.png" alt="CoproChat" className="h-28 drop-shadow-2xl" />
-            <h1 className="text-6xl font-display bg-gradient-to-r from-amber-400 to-yellow-500 bg-clip-text text-transparent">
+          <div className="flex items-center justify-center gap-2 sm:gap-4 mb-3">
+            <img src="/logo.png" alt="CoproChat" className="h-14 sm:h-20 md:h-28 drop-shadow-2xl" />
+            <h1 className="text-3xl sm:text-5xl md:text-6xl font-display bg-gradient-to-r from-amber-400 to-yellow-500 bg-clip-text text-transparent">
               CoproChat
             </h1>
           </div>
-          <p className="text-slate-400 text-lg">
+          <p className="text-slate-400 text-sm sm:text-lg px-2">
             {ui.subtitle}
           </p>
           <p className="text-slate-600 text-xs mt-2 italic">
@@ -298,7 +298,7 @@ function App() {
           <div className="inline-flex bg-slate-800 rounded-xl p-1">
             <button
               onClick={() => handleModeChange('corporatize')}
-              className={`px-6 py-2.5 rounded-lg font-display text-lg transition-all ${
+              className={`px-3 sm:px-6 py-2 sm:py-2.5 rounded-lg font-display text-sm sm:text-lg transition-all ${
                 mode === 'corporatize'
                   ? 'bg-gradient-to-r from-amber-600 to-yellow-600 text-white shadow-lg'
                   : 'text-slate-400 hover:text-white'
@@ -308,7 +308,7 @@ function App() {
             </button>
             <button
               onClick={() => handleModeChange('humanize')}
-              className={`px-6 py-2.5 rounded-lg font-display text-lg transition-all ${
+              className={`px-3 sm:px-6 py-2 sm:py-2.5 rounded-lg font-display text-sm sm:text-lg transition-all ${
                 mode === 'humanize'
                   ? 'bg-gradient-to-r from-cyan-600 to-blue-600 text-white shadow-lg'
                   : 'text-slate-400 hover:text-white'
@@ -335,7 +335,7 @@ function App() {
             onKeyDown={handleKeyDown}
             placeholder={ui.placeholder}
             maxLength={MAX_LENGTH}
-            className="w-full h-32 px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent resize-none text-lg"
+            className="w-full h-24 sm:h-32 px-3 sm:px-4 py-2 sm:py-3 bg-slate-800 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent resize-none text-base sm:text-lg"
           />
           <div className="flex justify-between text-xs mt-1">
             <span className="text-slate-500">⌘+Enter to translate</span>
@@ -349,7 +349,7 @@ function App() {
         <button
           onClick={handleTranslate}
           disabled={!input.trim() || loading}
-          className={`w-full py-4 rounded-xl font-display text-xl transition-all transform hover:scale-[1.02] active:scale-[0.98] disabled:from-slate-700 disabled:to-slate-700 disabled:cursor-not-allowed ${
+          className={`w-full py-3 sm:py-4 rounded-xl font-display text-base sm:text-xl transition-all transform hover:scale-[1.02] active:scale-[0.98] disabled:from-slate-700 disabled:to-slate-700 disabled:cursor-not-allowed ${
             mode === 'corporatize'
               ? 'bg-gradient-to-r from-amber-600 to-yellow-600 hover:from-amber-500 hover:to-yellow-500'
               : 'bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500'
@@ -394,14 +394,14 @@ function App() {
         )}
 
         {/* Examples */}
-        <div className="mt-8 pt-6 border-t border-slate-800">
-          <h3 className="text-sm font-medium text-slate-400 mb-4">Try these (click to load):</h3>
-          <div className="flex flex-wrap gap-2">
+        <div className="mt-6 sm:mt-8 pt-4 sm:pt-6 border-t border-slate-800">
+          <h3 className="text-xs sm:text-sm font-medium text-slate-400 mb-3 sm:mb-4">Try these (click to load):</h3>
+          <div className="flex flex-wrap gap-1.5 sm:gap-2">
             {examples.map((example) => (
               <button
                 key={example}
                 onClick={() => handleExample(example)}
-                className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 rounded-lg text-sm text-slate-300 transition-colors"
+                className="px-2 sm:px-3 py-1 sm:py-1.5 bg-slate-800 hover:bg-slate-700 rounded-lg text-xs sm:text-sm text-slate-300 transition-colors"
               >
                 {example}
               </button>
