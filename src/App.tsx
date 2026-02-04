@@ -135,7 +135,7 @@ function BSLevelSlider({ level, onChange }: { level: BSLevel; onChange: (level: 
           className={`absolute top-1/2 -translate-y-1/2 -translate-x-1/2 transition-all pointer-events-none ${
             isDragging ? 'duration-50' : 'duration-150 ease-out'
           }`}
-          style={{ left: `calc(16px + ${thumbPosition}% * (100% - 32px) / 100%)` }}
+          style={{ left: `calc(16px + (100% - 32px) * ${thumbPosition / 100})` }}
         >
           <div className={`relative w-3 sm:w-4 h-10 sm:h-14 -mt-1 sm:-mt-2 rounded transition-all duration-150 ${
             isDragging ? 'scale-105' : ''
