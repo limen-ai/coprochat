@@ -10,18 +10,5 @@
     { "src": "/api/(.*)", "dest": "/api/$1" },
     { "handle": "filesystem" },
     { "src": "/(.*)", "dest": "/$1" }
-  ],
-  "crons": [
-    {
-      "path": "/api/cron/check-alerts",
-      "schedule": "0 * * * *"
-    }
-  ],
-  "env": {
-    "DATABASE_URL": "@database_url",
-    "ADMIN_PASSWORD": "@admin_password",
-    "ALERT_EMAIL": "borisk@fastmail.com",
-    "RESEND_API_KEY": "@resend_api_key",
-    "CRON_SECRET": "@cron_secret"
-  }
+  ]
 }

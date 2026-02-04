@@ -1,157 +1,118 @@
 import { neon } from '@neondatabase/serverless';
 import crypto from 'crypto';
 
-// Database client
 const sql = neon(process.env.DATABASE_URL);
 
-// Daily salt for IP hashing (rotates daily for privacy)
-function getDailySalt() {
-  return new Date().toISOString().split('T')[0]; // YYYY-MM-DD
-}
-
-// Hash IP with daily salt
-export function hashIp(ip) {
-  const salt = getDailySalt();
+// Hash IP with daily salt for privacy
+function hashIp(ip) {
+  const salt = new Date().toISOString().split('T')[0];
   return crypto.createHash('sha256').update(ip + salt).digest('hex');
 }
 
-// Geo lookup using free IP-API (no key needed, rate limited to 45/min)
-export async function getGeoData(ip) {
+// Geo lookup (free IP-API, 45/min limit)
+async function getGeoData(ip) {
+  if (!ip || ip === '127.0.0.1' || ip.startsWith('192.168.') || ip.startsWith('10.') || ip === 'unknown') {
+    return { country: 'Local', region: 'Local', city: 'Local' };
+  }
   try {
-    // Skip for localhost/private IPs
-    if (ip === '127.0.0.1' || ip.startsWith('192.168.') || ip.startsWith('10.')) {
-      return { country: 'Local', region: 'Local', city: 'Local' };
-    }
-    
-    const response = await fetch(`http://ip-api.com/json/${ip}?fields=country,regionName,city`);
-    if (!response.ok) throw new Error('Geo lookup failed');
-    
-    const data = await response.json();
+    const res = await fetch(`http://ip-api.com/json/${ip}?fields=country,regionName,city`);
+    if (!res.ok) return { country: 'Unknown', region: 'Unknown', city: 'Unknown' };
+    const data = await res.json();
     return {
       country: data.country || 'Unknown',
-      region: data.regionName || 'Unknown', 
+      region: data.regionName || 'Unknown',
       city: data.city || 'Unknown'
     };
-  } catch (err) {
-    console.error('Geo lookup error:', err);
+  } catch {
     return { country: 'Unknown', region: 'Unknown', city: 'Unknown' };
   }
 }
 
 // Log a request
-export async function logRequest({
-  ip,
-  bsLevel,
-  inputLength,
-  injectionFlag = false,
-  errorFlag = false,
-  responseTimeMs
-}) {
+export async function logRequest({ ip, bsLevel, inputLength, injectionFlag = false, errorFlag = false, responseTimeMs }) {
   try {
     const ipHash = hashIp(ip);
     const geo = await getGeoData(ip);
-    
     await sql`
       INSERT INTO requests (ip_hash, country, region, city, bs_level, input_length, injection_flag, error_flag, response_time_ms)
       VALUES (${ipHash}, ${geo.country}, ${geo.region}, ${geo.city}, ${bsLevel}, ${inputLength}, ${injectionFlag}, ${errorFlag}, ${responseTimeMs})
     `;
-    
     return { success: true };
   } catch (err) {
-    console.error('Failed to log request:', err);
-    return { success: false, error: err.message };
+    console.error('logRequest error:', err);
+    return { success: false };
   }
 }
 
-// Check rate limit (max 20 per hour per IP)
+// Rate limit: 20/hour per IP
 export async function checkRateLimit(ip) {
   try {
     const ipHash = hashIp(ip);
     const result = await sql`
-      SELECT COUNT(*) as count FROM requests 
-      WHERE ip_hash = ${ipHash} 
-      AND created_at > NOW() - INTERVAL '1 hour'
+      SELECT COUNT(*)::int as count FROM requests 
+      WHERE ip_hash = ${ipHash} AND created_at > NOW() - INTERVAL '1 hour'
     `;
-    
-    const count = parseInt(result[0].count);
-    return {
-      allowed: count < 20,
-      count,
-      limit: 20,
-      remaining: Math.max(0, 20 - count)
-    };
+    const count = result[0]?.count || 0;
+    return { allowed: count < 20, count, remaining: Math.max(0, 20 - count) };
   } catch (err) {
-    console.error('Rate limit check failed:', err);
-    // Fail open - allow request if we can't check
-    return { allowed: true, count: 0, limit: 20, remaining: 20, error: err.message };
+    console.error('checkRateLimit error:', err);
+    return { allowed: true, count: 0, remaining: 20 }; // Fail open
   }
 }
 
-// Check for injection spike (10+ in last hour)
-export async function checkInjectionSpike() {
+// Dashboard stats
+export async function getDashboardStats() {
   try {
-    const result = await sql`
-      SELECT COUNT(*) as count FROM requests 
-      WHERE injection_flag = true 
-      AND created_at > NOW() - INTERVAL '1 hour'
-    `;
-    return parseInt(result[0].count);
-  } catch (err) {
-    console.error('Injection spike check failed:', err);
-    return 0;
-  }
-}
-
-// Get stats for dashboard
-export async function getDashboardStats(hours = 24) {
-  try {
-    const [
-      totalRequests,
-      uniqueIps,
-      injectionAttempts,
-      errors,
-      avgResponseTime,
-      topCountries,
-      topCities,
-      recentInjections,
-      hourlyStats
-    ] = await Promise.all([
-      sql`SELECT COUNT(*) as count FROM requests WHERE created_at > NOW() - INTERVAL '${sql.unsafe(String(hours))} hours'`.then(r => parseInt(r[0].count)),
-      sql`SELECT COUNT(DISTINCT ip_hash) as count FROM requests WHERE created_at > NOW() - INTERVAL '${sql.unsafe(String(hours))} hours'`.then(r => parseInt(r[0].count)),
-      sql`SELECT COUNT(*) as count FROM requests WHERE injection_flag = true AND created_at > NOW() - INTERVAL '${sql.unsafe(String(hours))} hours'`.then(r => parseInt(r[0].count)),
-      sql`SELECT COUNT(*) as count FROM requests WHERE error_flag = true AND created_at > NOW() - INTERVAL '${sql.unsafe(String(hours))} hours'`.then(r => parseInt(r[0].count)),
-      sql`SELECT COALESCE(AVG(response_time_ms), 0)::integer as avg FROM requests WHERE created_at > NOW() - INTERVAL '${sql.unsafe(String(hours))} hours'`.then(r => parseInt(r[0].avg)),
-      sql`SELECT country, COUNT(*) as count FROM requests WHERE created_at > NOW() - INTERVAL '${sql.unsafe(String(hours))} hours' GROUP BY country ORDER BY count DESC LIMIT 5`,
-      sql`SELECT city, country, COUNT(*) as count FROM requests WHERE created_at > NOW() - INTERVAL '${sql.unsafe(String(hours))} hours' GROUP BY city, country ORDER BY count DESC LIMIT 5`,
-      sql`SELECT created_at, country, city FROM requests WHERE injection_flag = true ORDER BY created_at DESC LIMIT 10`,
+    // Run queries in parallel
+    const [basic, countries, cities, injections, hourly] = await Promise.all([
+      sql`
+        SELECT 
+          COUNT(*)::int as total,
+          COUNT(DISTINCT ip_hash)::int as unique_ips,
+          COUNT(*) FILTER (WHERE injection_flag)::int as injections,
+          COUNT(*) FILTER (WHERE error_flag)::int as errors,
+          COALESCE(AVG(response_time_ms), 0)::int as avg_time
+        FROM requests WHERE created_at > NOW() - INTERVAL '24 hours'
+      `,
+      sql`
+        SELECT country, COUNT(*)::int as count 
+        FROM requests WHERE created_at > NOW() - INTERVAL '24 hours' 
+        GROUP BY country ORDER BY count DESC LIMIT 5
+      `,
+      sql`
+        SELECT city, country, COUNT(*)::int as count 
+        FROM requests WHERE created_at > NOW() - INTERVAL '24 hours' 
+        GROUP BY city, country ORDER BY count DESC LIMIT 5
+      `,
+      sql`
+        SELECT created_at, country, city 
+        FROM requests WHERE injection_flag = true 
+        ORDER BY created_at DESC LIMIT 10
+      `,
       sql`
         SELECT 
           DATE_TRUNC('hour', created_at) as hour,
-          COUNT(*) as requests,
-          COUNT(*) FILTER (WHERE injection_flag = true) as injections
-        FROM requests 
-        WHERE created_at > NOW() - INTERVAL '${sql.unsafe(String(hours))} hours'
-        GROUP BY DATE_TRUNC('hour', created_at)
-        ORDER BY hour DESC
-        LIMIT 24
+          COUNT(*)::int as requests,
+          COUNT(*) FILTER (WHERE injection_flag)::int as injections
+        FROM requests WHERE created_at > NOW() - INTERVAL '24 hours'
+        GROUP BY 1 ORDER BY 1 DESC LIMIT 24
       `
     ]);
-    
+
+    const b = basic[0] || {};
     return {
-      totalRequests,
-      uniqueIps,
-      injectionAttempts,
-      errors,
-      avgResponseTime,
-      topCountries,
-      topCities,
-      recentInjections,
-      hourlyStats
+      totalRequests: b.total || 0,
+      uniqueIps: b.unique_ips || 0,
+      injectionAttempts: b.injections || 0,
+      errors: b.errors || 0,
+      avgResponseTime: b.avg_time || 0,
+      topCountries: countries,
+      topCities: cities,
+      recentInjections: injections,
+      hourlyStats: hourly
     };
   } catch (err) {
-    console.error('Dashboard stats failed:', err);
-    return { error: err.message };
+    console.error('getDashboardStats error:', err);
+    throw err;
   }
 }
-
-export { sql };

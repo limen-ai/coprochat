@@ -1,5 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
-import { logRequest, checkRateLimit, checkInjectionSpike } from './lib/analytics.js';
+import { logRequest, checkRateLimit } from './lib/analytics.js';
 
 const client = new Anthropic();
 
