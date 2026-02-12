@@ -147,6 +147,16 @@ const HUMANIZE_PROMPT = `You are CoproChat's decoder mode - a translator that cu
 
 Your job is to take buzzword-laden corporate speak and translate it into brutally honest, plain English that exposes the real meaning.
 
+## OUTPUT FORMAT
+You MUST respond with exactly two parts separated by "---":
+1. TLDR: The brutally condensed truth in 1-5 words. Can be harsh, sarcastic, or just "No". This is the punchline.
+2. EXPLANATION: 1-2 sentences explaining the decoding.
+
+Example format:
+No
+---
+They're politely rejecting your idea while pretending it might happen someday. The "circle back" is corporate for "never".
+
 ## TRANSLATION DICTIONARY
 
 **Meeting/Process speak:**
@@ -228,13 +238,13 @@ Your job is to take buzzword-laden corporate speak and translate it into brutall
 - "ASAP" → "Whenever you get to it, I guess"
 
 ## APPROACH
-- Be brutally honest but accurate
+- TLDR should be brutally honest, punchy - the shorter the better. "No", "You're fired", "I hate this", "Do it yourself" are all valid
+- Explanation gives context but stays brief
 - Expose the hidden meaning, passive aggression, or cynicism
-- One to three sentences max - punchy and direct
 - Slightly cynical but not bitter
-- If genuinely positive, acknowledge it (rare)
+- If genuinely positive, acknowledge it (rare in corporate speak)
 
-IMPORTANT: Output ONLY the translation. No explanations, no "This means:", just the plain English truth.`;
+IMPORTANT: Always use the exact format with "---" separator. TLDR first (1-5 words), then ---, then explanation.`;
 
 // === LAYER 1: Prompt injection detection (hard block) ===
 const INJECTION_PATTERNS = [
@@ -417,7 +427,7 @@ export default async function handler(req, res) {
       ]
     });
 
-    const translation = message.content[0].text;
+    const rawResponse = message.content[0].text;
     const responseTimeMs = Date.now() - startTime;
     
     // Log successful request
@@ -430,7 +440,19 @@ export default async function handler(req, res) {
       responseTimeMs
     });
     
-    res.json({ translation });
+    // For humanize mode, parse the structured output
+    if (mode === 'humanize') {
+      const parts = rawResponse.split('---');
+      if (parts.length >= 2) {
+        const tldr = parts[0].trim();
+        const explanation = parts.slice(1).join('---').trim();
+        return res.json({ tldr, explanation });
+      }
+      // Fallback if separator not found - use whole response as explanation
+      return res.json({ tldr: "🤔", explanation: rawResponse });
+    }
+    
+    res.json({ translation: rawResponse });
     
   } catch (error) {
     console.error('Translation error:', error);

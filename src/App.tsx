@@ -1,9 +1,16 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 
 const MAX_LENGTH = 500;
+const EXAMPLES_TO_SHOW = 5;
 
 type Mode = 'corporatize' | 'humanize';
 type BSLevel = 'pm' | 'director' | 'vp';
+
+// Shuffle array and take n items
+function shuffleAndTake<T>(array: T[], n: number): T[] {
+  const shuffled = [...array].sort(() => Math.random() - 0.5);
+  return shuffled.slice(0, n);
+}
 
 const BS_LEVELS: { id: BSLevel; label: string; icon: string; description: string }[] = [
   { id: 'pm', label: 'Product Manager', icon: '/icon-pm.png', description: 'Light jargon, still human' },
@@ -220,24 +227,48 @@ function BSLevelSlider({ level, onChange }: { level: BSLevel; onChange: (level: 
   );
 }
 
+interface HumanizeOutput {
+  tldr: string;
+  explanation: string;
+}
+
 function App() {
   const [mode, setMode] = useState<Mode>('corporatize')
   const [bsLevel, setBsLevel] = useState<BSLevel>('director')
   const [input, setInput] = useState('')
   const [output, setOutput] = useState('')
+  const [humanizeOutput, setHumanizeOutput] = useState<HumanizeOutput | null>(null)
   const [loading, setLoading] = useState(false)
   const [copied, setCopied] = useState(false)
   const [error, setError] = useState('')
+  const [exampleKey, setExampleKey] = useState(0) // Used to refresh examples
 
   const ui = UI_TEXT[mode];
-  const examples = EXAMPLES[mode];
+  
+  // Randomize examples on mode change or exampleKey change
+  const examples = useMemo(() => 
+    shuffleAndTake(EXAMPLES[mode], EXAMPLES_TO_SHOW),
+    [mode, exampleKey]
+  );
+  
+  // Calculate fluff percentage (only for corporatize mode)
+  const fluffPercentage = useMemo(() => {
+    if (mode !== 'corporatize' || !input.trim() || !output) return null;
+    const inputWords = input.trim().split(/\s+/).length;
+    const outputWords = output.trim().split(/\s+/).length;
+    if (inputWords === 0) return null;
+    const increase = Math.round(((outputWords - inputWords) / inputWords) * 100);
+    return increase > 0 ? increase : null;
+  }, [input, output, mode]);
 
   const handleModeChange = (newMode: Mode) => {
     if (newMode !== mode) {
       setMode(newMode)
       setInput('')
       setOutput('')
+      setHumanizeOutput(null)
       setError('')
+      setExampleKey(k => k + 1) // Refresh examples
     }
   }
 
@@ -246,10 +277,18 @@ function App() {
     
     setLoading(true)
     setError('')
+    setOutput('')
+    setHumanizeOutput(null)
     
     try {
       const response = await translate(input, mode, bsLevel)
-      setOutput(response)
+      
+      if (typeof response === 'object' && 'tldr' in response) {
+        // Structured humanize response
+        setHumanizeOutput(response)
+      } else if (typeof response === 'string') {
+        setOutput(response)
+      }
     } catch (err) {
       setError(ui.errorText)
       console.error(err)
@@ -259,7 +298,10 @@ function App() {
   }
 
   const handleCopy = async () => {
-    await navigator.clipboard.writeText(output)
+    const textToCopy = mode === 'humanize' && humanizeOutput 
+      ? `${humanizeOutput.tldr}\n\n${humanizeOutput.explanation}`
+      : output;
+    await navigator.clipboard.writeText(textToCopy)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }
@@ -366,36 +408,89 @@ function App() {
         )}
 
         {/* Output */}
-        {output && !loading && (
+        {(output || humanizeOutput) && !loading && (
           <div className="mt-8">
             <div className="flex justify-between items-center mb-2">
-              <label className="block text-sm font-medium text-slate-400">
-                {ui.outputLabel}
-              </label>
+              <div className="flex items-center gap-3">
+                <label className="block text-sm font-medium text-slate-400">
+                  {ui.outputLabel}
+                </label>
+                {fluffPercentage && (
+                  <span className="text-xs font-display text-amber-400/80 bg-amber-400/10 px-2 py-0.5 rounded-full">
+                    +{fluffPercentage}% fluff 💨
+                  </span>
+                )}
+              </div>
               <button
                 onClick={handleCopy}
-                className={`text-sm transition-colors ${
-                  mode === 'corporatize' 
-                    ? 'text-amber-400 hover:text-amber-300' 
-                    : 'text-cyan-400 hover:text-cyan-300'
+                className={`text-sm transition-all duration-300 flex items-center gap-1.5 px-3 py-1 rounded-lg ${
+                  copied 
+                    ? 'bg-green-500/20 text-green-400 scale-105' 
+                    : mode === 'corporatize' 
+                      ? 'text-amber-400 hover:text-amber-300 hover:bg-amber-400/10' 
+                      : 'text-cyan-400 hover:text-cyan-300 hover:bg-cyan-400/10'
                 }`}
               >
-                {copied ? '✓ Copied!' : 'Copy'}
+                {copied ? (
+                  <>
+                    <span className="inline-block animate-bounce">✓</span>
+                    <span>Copied!</span>
+                  </>
+                ) : (
+                  <>
+                    <span>📋</span>
+                    <span>Copy</span>
+                  </>
+                )}
               </button>
             </div>
-            <div className={`p-6 rounded-xl ${
-              mode === 'corporatize'
-                ? 'bg-gradient-to-br from-slate-800/80 to-slate-800/40 border border-amber-900/30'
-                : 'bg-gradient-to-br from-slate-800/80 to-slate-800/40 border border-cyan-900/30'
-            }`}>
-              <p className="text-lg leading-relaxed">{output}</p>
-            </div>
+            
+            {/* Corporatize output */}
+            {mode === 'corporatize' && output && (
+              <div className="p-6 rounded-xl bg-gradient-to-br from-slate-800/80 to-slate-800/40 border border-amber-900/30">
+                <p className="text-lg leading-relaxed">{output}</p>
+              </div>
+            )}
+            
+            {/* Humanize output - two parts */}
+            {mode === 'humanize' && humanizeOutput && (
+              <div className="space-y-4">
+                {/* TLDR - the brutal truth */}
+                <div className="p-4 rounded-xl bg-gradient-to-br from-cyan-900/30 to-slate-800/40 border border-cyan-500/40">
+                  <p className="text-2xl sm:text-3xl font-display text-cyan-300 leading-tight">
+                    "{humanizeOutput.tldr}"
+                  </p>
+                </div>
+                
+                {/* Explanation */}
+                <div className="p-4 rounded-xl bg-gradient-to-br from-slate-800/60 to-slate-800/30 border border-slate-700/50">
+                  <p className="text-sm text-slate-400 mb-2 font-display uppercase tracking-wider">Why:</p>
+                  <p className="text-base leading-relaxed text-slate-300">{humanizeOutput.explanation}</p>
+                </div>
+              </div>
+            )}
+            
+            {/* Fallback for old humanize output format */}
+            {mode === 'humanize' && output && !humanizeOutput && (
+              <div className="p-6 rounded-xl bg-gradient-to-br from-slate-800/80 to-slate-800/40 border border-cyan-900/30">
+                <p className="text-lg leading-relaxed">{output}</p>
+              </div>
+            )}
           </div>
         )}
 
         {/* Examples */}
         <div className="mt-6 sm:mt-8 pt-4 sm:pt-6 border-t border-slate-800">
-          <h3 className="text-xs sm:text-sm font-medium text-slate-400 mb-3 sm:mb-4">Try these (click to load):</h3>
+          <div className="flex justify-between items-center mb-3 sm:mb-4">
+            <h3 className="text-xs sm:text-sm font-medium text-slate-400">Try these (click to load):</h3>
+            <button 
+              onClick={() => setExampleKey(k => k + 1)}
+              className="text-xs text-slate-500 hover:text-slate-400 transition-colors"
+              title="Shuffle examples"
+            >
+              🎲 More
+            </button>
+          </div>
           <div className="flex flex-wrap gap-1.5 sm:gap-2">
             {examples.map((example) => (
               <button
@@ -422,7 +517,7 @@ function App() {
 // Call the backend API
 const API_URL = import.meta.env.DEV ? 'http://localhost:3001' : '';
 
-async function translate(input: string, mode: Mode, level: BSLevel): Promise<string> {
+async function translate(input: string, mode: Mode, level: BSLevel): Promise<string | HumanizeOutput> {
   const response = await fetch(`${API_URL}/api/translate`, {
     method: 'POST',
     headers: {
@@ -436,6 +531,12 @@ async function translate(input: string, mode: Mode, level: BSLevel): Promise<str
   }
   
   const data = await response.json()
+  
+  // For humanize mode, expect structured output
+  if (mode === 'humanize' && data.tldr && data.explanation) {
+    return { tldr: data.tldr, explanation: data.explanation }
+  }
+  
   return data.translation
 }
 
