@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react'
 
-const MAX_LENGTH = 500;
+const MAX_LENGTH_CORPORATIZE = 500;
+const MAX_LENGTH_HUMANIZE = 1000;
 const EXAMPLES_TO_SHOW = 5;
 
 type Mode = 'corporatize' | 'humanize';
@@ -373,16 +374,16 @@ function App() {
           </label>
           <textarea
             value={input}
-            onChange={(e) => setInput(e.target.value.slice(0, MAX_LENGTH))}
+            onChange={(e) => setInput(e.target.value.slice(0, mode === 'humanize' ? MAX_LENGTH_HUMANIZE : MAX_LENGTH_CORPORATIZE))}
             onKeyDown={handleKeyDown}
             placeholder={ui.placeholder}
-            maxLength={MAX_LENGTH}
+            maxLength={mode === 'humanize' ? MAX_LENGTH_HUMANIZE : MAX_LENGTH_CORPORATIZE}
             className="w-full h-24 sm:h-32 px-3 sm:px-4 py-2 sm:py-3 bg-slate-800 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent resize-none text-base sm:text-lg"
           />
           <div className="flex justify-between text-xs mt-1">
             <span className="text-slate-500">⌘+Enter to translate</span>
-            <span className={input.length > MAX_LENGTH * 0.9 ? 'text-amber-400' : 'text-slate-500'}>
-              {input.length}/{MAX_LENGTH}
+            <span className={input.length > (mode === 'humanize' ? MAX_LENGTH_HUMANIZE : MAX_LENGTH_CORPORATIZE) * 0.9 ? 'text-amber-400' : 'text-slate-500'}>
+              {input.length}/{mode === 'humanize' ? MAX_LENGTH_HUMANIZE : MAX_LENGTH_CORPORATIZE}
             </span>
           </div>
         </div>
